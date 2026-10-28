@@ -435,7 +435,7 @@ function roundLabel(k,R){
   const m=/^(\d{4})-(\d{1,2})/.exec(String(k||""));
   return m&&CNM[+m[2]]?CNM[+m[2]]+"月影聚":(t||String(k||""));
 }
-function roundKeyCN(k){const m=/^(\d{4})-(\d{1,2})$/.exec(String(k||""));return m&&CNM[+m[2]]?m[1]+"年"+CNM[+m[2]]+"月":String(k||"")}
+function roundKeyCN(k){const m=/^(\d{4})-(\d{1,2})$/.exec(String(k||""));return m&&+m[2]>=1&&+m[2]<=12?m[1]+"年"+(+m[2])+"月":String(k||"")}
 function sized(url,w){return String(url||"").replace(/sz=w\d+/,"sz=w"+w)}
 function workCard(x,medal,label){
   return `<div class="frame">
