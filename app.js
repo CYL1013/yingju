@@ -427,6 +427,15 @@ function exifLine(e){
   return p.join(" · ");
 }
 function exifHtml(e){const t=exifLine(e);return t?`<div class="exif">${esc(t)}</div>`:""}
+const CNM=["","一","二","三","四","五","六","七","八","九","十","十一","十二"];
+function cnMonths(t){return String(t||"").replace(/(\d{1,2})\s*月/g,(m,n)=>CNM[+n]?CNM[+n]+"月":m)}
+function roundLabel(k,R){
+  const t=String((R&&R.title)||"").trim();
+  if(t&&!/^[\d\-\/.\s]+$/.test(t))return cnMonths(t);
+  const m=/^(\d{4})-(\d{1,2})/.exec(String(k||""));
+  return m&&CNM[+m[2]]?CNM[+m[2]]+"月影聚":(t||String(k||""));
+}
+function roundKeyCN(k){const m=/^(\d{4})-(\d{1,2})$/.exec(String(k||""));return m&&CNM[+m[2]]?m[1]+"年"+CNM[+m[2]]+"月":String(k||"")}
 function sized(url,w){return String(url||"").replace(/sz=w\d+/,"sz=w"+w)}
 function workCard(x,medal,label){
   return `<div class="frame">
@@ -450,8 +459,8 @@ function eventCard(k,R){
     return `<div class="ev-row"><div class="ev-theme"><b>${T}</b>${esc(themeName(T,cf))}</div>
       ${top.length?`<div class="thumbs">${top.map(x=>`<span class="tcell"><span class="thumb">${img(sized(x.url,400),"")}<i class="m${x.rank}">${x.rank}</i></span><span class="tname">${esc(x.name||"")}</span></span>`).join("")}</div>`:`<p class="small muted">沒有名次資料</p>`}</div>`;
   }).join("");
-  return `<button class="event" data-r="${esc(k)}" aria-label="查看 ${esc(R.title||k)}">
-    <div class="ev-head"><span class="ev-title">${esc(R.title||k)}</span><span class="ev-date">${esc(k)}${R.publishedAt?" · "+esc(fmtDay(R.publishedAt)):""}</span></div>
+  return `<button class="event" data-r="${esc(k)}" aria-label="查看 ${esc(roundLabel(k,R))}">
+    <div class="ev-head"><span class="ev-title">${esc(roundLabel(k,R))}</span><span class="ev-date">${esc(roundKeyCN(k))}${R.publishedAt?" · "+esc(fmtDay(R.publishedAt)):""}</span></div>
     ${rows}
   </button>`;
 }
@@ -498,7 +507,7 @@ function resultsView(){
     const medals=items.filter(i=>i.x.rank).length;
     return `<div class="stack"><div class="stack" style="gap:6px"><button class="link" id="pfback">← 返回</button>
       <h2>${esc(name)} 的作品集</h2><p class="small muted">${items.length} 件作品 · ${new Set(items.map(i=>i.k)).size} 次活動${medals?` · 前三名 ${medals} 次`:""}</p></div>
-      <div class="grid big">${items.map(i=>workCard(i.x,true,`${i.R.title||i.k} · ${themeName(i.T,{themeA:i.R.themeA,themeB:i.R.themeB})}`)).join("")}</div></div>`;
+      <div class="grid big">${items.map(i=>workCard(i.x,true,`${roundLabel(i.k,i.R)} · ${themeName(i.T,{themeA:i.R.themeA,themeB:i.R.themeB})}`)).join("")}</div></div>`;
   }
   /* 年度積分榜 */
   if(S.resView==="board"){
@@ -521,7 +530,7 @@ function resultsView(){
       </tbody></table></div></div>`;
   }
   let h=`<div class="stack">${seg}<div class="row" style="justify-content:space-between;align-items:end">
-    <label class="field" for="rr" style="min-width:220px">活動<select id="rr"><option value="">全部活動</option>${keys.map(k=>`<option value="${esc(k)}" ${k===S.resultRound?"selected":""}>${esc(res[k].title||k)}（${esc(k)}）</option>`).join("")}</select></label>
+    <label class="field" for="rr" style="min-width:220px">活動<select id="rr"><option value="">全部活動</option>${keys.map(k=>`<option value="${esc(k)}" ${k===S.resultRound?"selected":""}>${esc(roundLabel(k,res[k]))}（${esc(roundKeyCN(k))}）</option>`).join("")}</select></label>
     ${S.resultRound?`<div class="row">${S.st.me&&S.st.me.isAdmin?(res[S.resultRound].deckUrl?`<a class="btn" href="${esc(res[S.resultRound].deckUrl)}" target="_blank" rel="noopener">開啟簡報</a><button class="btn" id="mkdeck">重新產生簡報</button>`:`<button class="btn" id="mkdeck">產生簡報</button>`):""}<button class="btn primary" id="play">發表會模式</button></div>`:""}</div>`;
   if(!S.resultRound){
     return h+`<p class="small muted">共 ${keys.length} 次活動，由新到舊排列。點活動可查看完整成果，點名字可看個人作品集。</p><div class="events">${keys.map(k=>eventCard(k,res[k])).join("")}</div></div>`;
@@ -529,7 +538,7 @@ function resultsView(){
   const R=res[S.resultRound],cf={themeA:R.themeA,themeB:R.themeB};
   const jumps=T2.filter(T=>(R[T]||[]).length);
   h+=`<div class="ev-bar" id="evbar"><div class="ev-bar-info"><button class="link" id="back">← 全部活動</button>
-    <h2>${esc(R.title||S.resultRound)}</h2><p class="small muted">${esc(S.resultRound)}${R.publishedAt?" · "+esc(fmtDay(R.publishedAt)):""} · <span class="mono">${R.entrants}</span> 位攝影者參加</p></div>
+    <h2>${esc(roundLabel(S.resultRound,R))}</h2><p class="small muted">${esc(roundKeyCN(S.resultRound))}${R.publishedAt?" · "+esc(fmtDay(R.publishedAt)):""} · <span class="mono">${R.entrants}</span> 位攝影者參加</p></div>
     ${jumps.length>1?`<div class="jumps">${jumps.map(T=>`<button class="jump" data-jump="${T}"><b>${T}</b>${esc(themeName(T,cf))}</button>`).join("")}</div>`:""}</div>`;
   for(const T of T2){
     const list=R[T]||[],top=list.filter(x=>x.rank).sort((a,b)=>a.rank-b.rank),rest=list.filter(x=>!x.rank);
@@ -785,7 +794,7 @@ function playShow(R){
   o.innerHTML=`<div class="overlay show" role="dialog" aria-label="發表會"><div class="stage" id="st"></div><div class="bar"><button id="sx">結束</button><span id="sn"></span><span><button id="sp">←</button> <button id="sf">→</button></span></div></div>`;
   const root=o.firstChild;
   const draw=()=>{const s=slides[i],tn=s.T?themeName(s.T,cf):"";let h="";
-    if(s.k==="title")h=`<div class="big">${esc(R.title||"影聚")}</div><div class="sub mono">${esc(R.round)} · ${R.entrants} 位攝影者</div>`;
+    if(s.k==="title")h=`<div class="big">${esc(roundLabel(R.round,R))}</div><div class="sub">${esc(roundKeyCN(R.round))} · ${R.entrants} 位攝影者</div>`;
     else if(s.k==="theme")h=`<div class="sub mono">主題 ${s.T}</div><div class="big">${esc(tn)}</div>${R["desc"+s.T]?`<div class="sub" style="font-size:15px;max-width:40ch">${esc(R["desc"+s.T])}</div>`:""}<div class="sub">全部作品</div>`;
     else if(s.k==="work")h=`${img(s.x.url,"")}<div class="sub">${esc(s.x.name||"")}　<span class="mono">${s.T}</span></div>${exifLine(s.x.exif)?`<div class="sub" style="font-size:13px">${esc(exifLine(s.x.exif))}</div>`:""}${s.x.note?`<div class="sub" style="font-size:clamp(14px,1.8vw,18px);max-width:60ch">${esc(s.x.note)}</div>`:""}`;
     else if(s.k==="top")h=`<div class="sub mono">主題 ${s.T} · ${esc(tn)}</div><div class="big">前三名揭曉</div>`;
